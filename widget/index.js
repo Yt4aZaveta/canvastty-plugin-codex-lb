@@ -117,7 +117,7 @@ async function refresh() {
     render(payload.accounts);
   } catch (error) {
     showMessage(error instanceof TypeError
-      ? "Локальный мост недоступен. Запустите bridge/bridge.py."
+      ? "Не удалось получить ответ от Caddy на 127.0.0.1:2456 (соединение или CORS)."
       : error instanceof Error ? error.message : "Не удалось получить лимиты.");
     if (accounts.childElementCount) updated.textContent = "Показаны последние полученные данные";
   } finally {
@@ -130,14 +130,17 @@ setup.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = keyInput.value.trim();
   if (!value) return;
+  showMessage("Сохраняю API-ключ…");
   try {
     await host.secrets.set(secretName, value);
     apiKey = value;
     keyInput.value = "";
     setup.hidden = true;
     await refresh();
-  } catch {
-    showMessage("Защищённое хранилище CanvasTTY недоступно; ключ не сохранён.");
+  } catch (error) {
+    showMessage(error instanceof Error
+      ? `Ключ не сохранён: ${error.message}`
+      : "Ключ не сохранён в защищённом хранилище CanvasTTY.");
   }
 });
 
