@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <title>Codex LB limits</title>
+  </head>
+  <body>
+    <main class="widget">
+      <header class="header">
+        <div>
+          <p class="eyebrow">CODEX LB</p>
+          <h1>Лимиты аккаунтов</h1>
+        </div>
+        <div class="actions">
+          <button id="refresh" type="button" aria-label="Обновить данные">↻</button>
+          <button id="configure" type="button" aria-label="Настроить API-ключ">⚙</button>
+        </div>
+      </header>
+
+      <form id="setup" class="setup" hidden>
+        <label for="api-key">API-ключ codex-lb</label>
+        <div class="setup-row">
+          <input id="api-key" type="password" autocomplete="off" placeholder="sk-clb-…" required>
+          <button type="submit">Сохранить</button>
+        </div>
+        <p>Ключ хранится в защищённом хранилище CanvasTTY.</p>
+      </form>
+
+      <p id="message" class="message" role="status">Загрузка…</p>
+      <div id="accounts" class="accounts" aria-live="polite"></div>
+      <footer id="updated" class="updated"></footer>
+    </main>
+    <script src="canvastty-plugin://host/sdk.js"></script>
+    <script src="./index.js"></script>
+  </body>
+</html>
