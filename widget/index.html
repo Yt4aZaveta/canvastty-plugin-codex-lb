@@ -19,16 +19,16 @@
         </div>
       </header>
 
-      <form id="setup" class="setup" hidden>
+      <p id="message" class="message" role="status">Загрузка…</p>
+
+      <section id="setup" class="setup" hidden>
         <label for="api-key">API-ключ codex-lb</label>
         <div class="setup-row">
-          <input id="api-key" type="password" autocomplete="off" placeholder="sk-clb-…" required>
-          <button type="submit">Сохранить</button>
+          <input id="api-key" type="password" autocomplete="off" placeholder="sk-clb-…">
+          <button id="save-key" type="button">Сохранить</button>
         </div>
         <p>Ключ хранится в защищённом хранилище CanvasTTY.</p>
-      </form>
-
-      <p id="message" class="message" role="status">Загрузка…</p>
+      </section>
       <div id="accounts" class="accounts" aria-live="polite"></div>
       <footer id="updated" class="updated"></footer>
     </main>

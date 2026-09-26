@@ -19,7 +19,9 @@ Caddy listens only on `127.0.0.1:2456`. It forwards only `GET /api/fleet/summary
 
 ## Install the widget
 
-In CanvasTTY, open **Settings → Plugins**, check `https://github.com/Yt4aZaveta/canvastty-plugin-codex-lb`, then install it. Add **Codex LB limits** through **Settings → Appearance → HOME composition**. Enter the API key in the widget and click **Save**; CanvasTTY stores it through its `secrets` SDK. The key is sent only to the loopback Caddy endpoint, which forwards it to codex-lb.
+In CanvasTTY, open **Settings → Plugins**, check `https://github.com/Yt4aZaveta/canvastty-plugin-codex-lb`, then install it. Add **Codex LB limits** through **Settings → Appearance → HOME composition**. Enter the API key in the widget and click **Save** (or press Enter); CanvasTTY stores it through its `secrets` SDK. The widget shows save errors above the key field. The key is sent only to the loopback Caddy endpoint, which forwards it to codex-lb.
+
+The widget follows CanvasTTY's selected `sage`, `lilac`, or `night` palette through the plugin context, including changes while it is open. CanvasTTY's plugin context does not expose the separate HOME accent preset.
 
 The widget reads persisted quota snapshots once a minute. Its refresh button rereads those snapshots; it does not call codex-lb's upstream refresh route. Missing quota data is shown as unknown, not as 0%.
 

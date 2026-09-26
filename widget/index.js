@@ -6,6 +6,7 @@ const message = document.querySelector("#message");
 const updated = document.querySelector("#updated");
 const setup = document.querySelector("#setup");
 const keyInput = document.querySelector("#api-key");
+const saveButton = document.querySelector("#save-key");
 const refreshButton = document.querySelector("#refresh");
 const configureButton = document.querySelector("#configure");
 let apiKey = null;
@@ -126,22 +127,46 @@ async function refresh() {
   }
 }
 
-setup.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function saveKey() {
+  if (saveButton.disabled) return;
   const value = keyInput.value.trim();
-  if (!value) return;
+  if (!value) {
+    showMessage("Введите API-ключ codex-lb.");
+    keyInput.focus();
+    return;
+  }
   showMessage("Сохраняю API-ключ…");
+  saveButton.disabled = true;
+  let timeout;
+  let timedOut = false;
   try {
-    await host.secrets.set(secretName, value);
+    await Promise.race([
+      host.secrets.set(secretName, value),
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => {
+          timedOut = true;
+          reject(new Error("CanvasTTY не ответил на запрос сохранения за 10 секунд."));
+        }, 10_000);
+      })
+    ]);
     apiKey = value;
     keyInput.value = "";
     setup.hidden = true;
     await refresh();
   } catch (error) {
-    showMessage(error instanceof Error
-      ? `Ключ не сохранён: ${error.message}`
-      : "Ключ не сохранён в защищённом хранилище CanvasTTY.");
+    showMessage(timedOut
+      ? "CanvasTTY не ответил за 10 секунд. Проверьте ключ после повторного открытия виджета."
+      : error instanceof Error ? `Ключ не сохранён: ${error.message}`
+        : "Ключ не сохранён в защищённом хранилище CanvasTTY.");
+  } finally {
+    clearTimeout(timeout);
+    saveButton.disabled = false;
   }
+}
+
+saveButton.addEventListener("click", () => { void saveKey(); });
+keyInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") { event.preventDefault(); void saveKey(); }
 });
 
 configureButton.addEventListener("click", () => {
