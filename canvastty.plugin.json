@@ -2,11 +2,12 @@
   "apiVersion": 1,
   "id": "dev.yt4azaveta.codex-lb-limits",
   "name": "Codex LB Limits",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Per-account Codex LB quota windows on CanvasTTY HOME.",
   "author": "Yt4aZaveta",
   "homepage": "https://github.com/Yt4aZaveta/canvastty-plugin-codex-lb",
   "platforms": ["canvastty"],
+  "minHostVersion": "1.7.0",
   "permissions": ["network", "secrets"],
   "contributions": [
     {
