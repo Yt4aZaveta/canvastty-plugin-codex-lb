@@ -28,7 +28,12 @@ function describeKey(hasKey) {
     : "При первой настройке API-ключ обязателен. Он хранится только в защищённом хранилище CanvasTTY.";
 }
 
-form.addEventListener("submit", (event) => {
+saveButton.addEventListener("click", () => {
+  void save();
+});
+
+form.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.target.tagName !== "INPUT") return;
   event.preventDefault();
   void save();
 });
