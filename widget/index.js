@@ -1,16 +1,14 @@
 const host = window.CanvasTTYPlugin;
-const endpoint = "http://127.0.0.1:2456/api/fleet/summary";
-const secretName = "codex-lb-api-key";
+const config = window.CodexLBConfig;
 const accounts = document.querySelector("#accounts");
 const message = document.querySelector("#message");
 const updated = document.querySelector("#updated");
-const setup = document.querySelector("#setup");
-const keyInput = document.querySelector("#api-key");
-const saveButton = document.querySelector("#save-key");
 const refreshButton = document.querySelector("#refresh");
 const configureButton = document.querySelector("#configure");
 let apiKey = null;
-let loading = false;
+let endpoint = null;
+let configurationVersion = 0;
+let activeRequest = null;
 
 host.onContext(({ appearance }) => {
   document.documentElement.dataset.palette = appearance.palette;
@@ -101,88 +99,104 @@ function render(data) {
 }
 
 async function refresh() {
-  if (!apiKey || loading) return;
-  loading = true;
+  if (!apiKey || !endpoint || activeRequest) return;
+  const request = { controller: new AbortController(), version: configurationVersion };
+  activeRequest = request;
   refreshButton.disabled = true;
   if (!accounts.childElementCount) showMessage("Загрузка лимитов…");
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    request.controller.abort();
+  }, 15_000);
+  let failure = "Не удалось подключиться к выбранному серверу. Проверьте доступность, TLS, CORS и конечный URL без перенаправлений.";
   try {
     const response = await fetch(endpoint, {
+      method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },
       credentials: "omit",
-      cache: "no-store"
+      cache: "no-store",
+      redirect: "error",
+      signal: request.controller.signal
     });
-    if (response.status === 401) throw new Error("API-ключ отклонён. Проверьте ключ в настройках виджета.");
-    if (!response.ok) throw new Error(`Не удалось получить лимиты: HTTP ${response.status}.`);
-    const payload = await response.json();
-    if (!Array.isArray(payload.accounts)) throw new Error("Ответ codex-lb имеет неожиданный формат.");
+    if (response.status === 401 || response.status === 403) {
+      failure = `Сервер отклонил авторизацию (HTTP ${response.status}). Проверьте API-ключ и его права в настройках плагина.`;
+      throw new Error();
+    }
+    if (!response.ok) {
+      failure = `Не удалось получить лимиты от выбранного сервера: HTTP ${response.status}.`;
+      throw new Error();
+    }
+    const body = await response.text();
+    failure = "Ответ codex-lb имеет неверный формат: ожидается JSON с массивом accounts.";
+    const payload = JSON.parse(body);
+    if (!Array.isArray(payload?.accounts) || payload.accounts.some((account) =>
+      !account || typeof account !== "object" || Array.isArray(account))) throw new Error();
+    if (request.version !== configurationVersion) return;
     render(payload.accounts);
-  } catch (error) {
-    showMessage(error instanceof TypeError
-      ? "Не удалось получить ответ от Caddy на 127.0.0.1:2456 (соединение или CORS)."
-      : error instanceof Error ? error.message : "Не удалось получить лимиты.");
+  } catch {
+    if (request.version !== configurationVersion) return;
+    showMessage(timedOut
+      ? "Выбранный сервер не ответил за 15 секунд. Повторите обновление или проверьте подключение."
+      : failure);
     if (accounts.childElementCount) updated.textContent = "Показаны последние полученные данные";
   } finally {
-    loading = false;
-    refreshButton.disabled = false;
-  }
-}
-
-async function saveKey() {
-  if (saveButton.disabled) return;
-  const value = keyInput.value.trim();
-  if (!value) {
-    showMessage("Введите API-ключ codex-lb.");
-    keyInput.focus();
-    return;
-  }
-  showMessage("Сохраняю API-ключ…");
-  saveButton.disabled = true;
-  let timeout;
-  let timedOut = false;
-  try {
-    await Promise.race([
-      host.secrets.set(secretName, value),
-      new Promise((_, reject) => {
-        timeout = setTimeout(() => {
-          timedOut = true;
-          reject(new Error("CanvasTTY не ответил на запрос сохранения за 10 секунд."));
-        }, 10_000);
-      })
-    ]);
-    apiKey = value;
-    keyInput.value = "";
-    setup.hidden = true;
-    await refresh();
-  } catch (error) {
-    showMessage(timedOut
-      ? "CanvasTTY не ответил за 10 секунд. Проверьте ключ после повторного открытия виджета."
-      : error instanceof Error ? `Ключ не сохранён: ${error.message}`
-        : "Ключ не сохранён в защищённом хранилище CanvasTTY.");
-  } finally {
     clearTimeout(timeout);
-    saveButton.disabled = false;
+    if (activeRequest === request) {
+      activeRequest = null;
+      refreshButton.disabled = false;
+    }
   }
 }
 
-saveButton.addEventListener("click", () => { void saveKey(); });
-keyInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") { event.preventDefault(); void saveKey(); }
-});
+async function applyConfiguration(saved) {
+  const version = ++configurationVersion;
+  activeRequest?.controller.abort();
+  activeRequest = null;
+  apiKey = null;
+  endpoint = null;
+  refreshButton.disabled = true;
+  accounts.replaceChildren();
+  updated.textContent = "";
+  showMessage("Читаю настройки подключения…");
+  let failure = "Не удалось прочитать настройки из storage CanvasTTY.";
+  try {
+    const stored = saved === undefined ? await host.storage.get(config.storageKey) : saved;
+    if (version !== configurationVersion) return;
+    let baseUrl;
+    try {
+      baseUrl = config.baseUrlFromStorage(stored);
+    } catch (error) {
+      failure = error.message;
+      throw error;
+    }
+    failure = "Защищённое хранилище CanvasTTY недоступно. Не удалось прочитать API-ключ.";
+    const key = await host.secrets.get(config.secretName);
+    if (version !== configurationVersion) return;
+    endpoint = config.summaryEndpoint(baseUrl);
+    apiKey = key;
+    refreshButton.disabled = !apiKey;
+    if (!apiKey) {
+      showMessage("Откройте настройки плагина через ⚙ и сохраните API-ключ codex-lb, чтобы показать лимиты.");
+      return;
+    }
+    await refresh();
+  } catch {
+    if (version === configurationVersion) showMessage(failure);
+  }
+}
 
-configureButton.addEventListener("click", () => {
-  setup.hidden = !setup.hidden;
-  if (!setup.hidden) keyInput.focus();
+configureButton.addEventListener("click", async () => {
+  try {
+    await host.canvas.open("settings");
+  } catch {
+    showMessage("Не удалось открыть настройки codex-lb в CanvasTTY.");
+  }
 });
 refreshButton.addEventListener("click", () => { void refresh(); });
 setInterval(() => { void refresh(); }, 60_000);
 
-void (async () => {
-  try {
-    apiKey = await host.secrets.get(secretName);
-    setup.hidden = Boolean(apiKey);
-    if (apiKey) await refresh();
-    else showMessage("Введите API-ключ codex-lb, чтобы показать лимиты.");
-  } catch {
-    showMessage("Защищённое хранилище CanvasTTY недоступно.");
-  }
-})();
+host.onStorageChange((key, value) => {
+  if (key === config.storageKey) void applyConfiguration(value);
+});
+void applyConfiguration();

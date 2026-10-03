@@ -59,7 +59,7 @@ body { color: var(--text); background: var(--surface); user-select: none; }
   background: var(--surface);
 }
 
-.header, .actions, .setup-row, .account, .quota-title { display: flex; align-items: center; }
+.header, .actions, .account, .quota-title { display: flex; align-items: center; }
 .header { justify-content: space-between; gap: 12px; }
 .actions { gap: 6px; }
 .eyebrow { margin: 0 0 3px; color: var(--text-muted-on-dark); font: 800 11px/1 var(--font-mono); letter-spacing: .12em; }
@@ -74,14 +74,10 @@ button:disabled { cursor: wait; opacity: .5; }
 .actions button:hover, .actions button:focus-visible { color: white; background: rgba(255, 255, 255, .15); }
 
 .setup { margin-top: 12px; padding: 12px; border-radius: 12px; color: var(--text); background: var(--surface-soft); box-shadow: inset 0 .08em color-mix(in srgb, var(--text) 6%, transparent); }
-.setup[hidden] { display: none; }
 .setup label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; }
-.setup-row { gap: 8px; }
 .setup input { flex: 1; min-width: 0; padding: 8px; border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-radius: var(--radius-sm); outline: 0; color: var(--text); background: var(--surface); user-select: text; }
 .setup input::placeholder { color: var(--text-muted-on-dark); }
 .setup input:focus { border-color: var(--primary); }
-.setup-row button { padding: 8px 10px; color: var(--text-dark); background: var(--primary); font-weight: 850; }
-.setup-row button:hover, .setup-row button:focus-visible { background: var(--primary-hover); }
 .setup p { margin: 7px 0 0; color: var(--text-muted-on-dark); font-size: 11px; }
 
 .message { margin: 16px 0 0; color: var(--text-muted-on-dark); font-size: 13px; line-height: 1.45; }

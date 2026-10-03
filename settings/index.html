@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../widget/style.css">
+    <link rel="stylesheet" href="./style.css">
+    <title>Настройки Codex LB</title>
+  </head>
+  <body>
+    <main class="settings">
+      <p class="eyebrow">CODEX LB</p>
+      <h1>Настройки подключения</h1>
+      <form id="settings-form" class="setup">
+        <label for="base-url">Базовый URL codex-lb</label>
+        <input id="base-url" type="text" inputmode="url" autocomplete="url" spellcheck="false"
+          placeholder="https://lb.example.com" aria-describedby="url-help" required disabled>
+        <p id="url-help">Без /api/fleet/summary. Префикс пути допустим: https://example.com/codex-lb/. Для удалённого сервера нужен HTTPS; HTTP — только для localhost и 127.0.0.1.</p>
+
+        <label for="api-key">API-ключ</label>
+        <input id="api-key" type="password" autocomplete="off" spellcheck="false"
+          placeholder="sk-clb-…" aria-describedby="key-help" disabled>
+        <p id="key-help">Ключ хранится только в защищённом хранилище CanvasTTY. При первой настройке ключ обязателен.</p>
+
+        <button id="save" type="submit" disabled>Сохранить</button>
+      </form>
+      <p id="status" class="message" role="status" aria-live="polite">Читаю сохранённые настройки…</p>
+    </main>
+    <script src="canvastty-plugin://host/sdk.js"></script>
+    <script src="../config.js"></script>
+    <script src="./index.js"></script>
+  </body>
+</html>
