@@ -1,0 +1,10 @@
+html, body { overflow: auto; }
+body { user-select: text; }
+.settings { max-width: 640px; padding: 20px; }
+.setup input { width: 100%; }
+.setup label:not(:first-child) { margin-top: 18px; }
+.setup p { font-size: 12px; line-height: 1.5; }
+.setup button { margin-top: 18px; padding: 9px 14px; color: var(--text-dark); background: var(--primary); font-weight: 850; }
+.setup button:hover, .setup button:focus-visible { background: var(--primary-hover); }
+.message[data-state="error"] { color: var(--danger); }
+.message[data-state="success"] { color: var(--primary); }
