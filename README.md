@@ -4,7 +4,7 @@ A CanvasTTY HOME widget that shows each codex-lb account's remaining 5-hour and 
 
 ## Requirements
 
-- CanvasTTY 1.7.0 with runtime plugin support.
+- CanvasTTY 1.7.0 or newer with runtime plugin support. The integration has been reviewed against the 1.8.5-beta2 source; runtime checks are still required.
 - A local codex-lb with a CORS proxy, or a remote codex-lb behind an HTTPS reverse proxy with CORS configured as described below. Remote connections do not require local Docker or Caddy.
 - A codex-lb API key with the `upstream_limits` and `account_pool_usage` usage sections. The codex-lb setting that hides upstream quota from API keys must be off.
 
@@ -99,7 +99,7 @@ To update, open **Settings → Plugins**, choose **Check for updates**, then cli
 
 The widget follows CanvasTTY's selected `sage`, `lilac`, or `night` palette through the plugin context, including changes while it is open. CanvasTTY's plugin context does not expose the separate HOME accent preset.
 
-The widget reads persisted quota snapshots on opening and once a minute. Its refresh button rereads those snapshots; it does not call codex-lb's upstream refresh route. Missing quota data is shown as unknown, not as 0%.
+The widget reads persisted quota snapshots on opening and once a minute while visible. It uses CanvasTTY's [document visibility lifecycle](https://github.com/howdeploy/CanvasTTY/blob/b98522e7c379bc44cd9e7abb353d73a71ad6e4d2/docs/plugins.md#visibility) to stop its polling timer while hidden and refresh immediately when shown again. An already-started request may finish while hidden. Configuration changes still clear old data and load the saved URL and key while hidden; the next request waits until the widget is visible. Its refresh button rereads those snapshots; it does not call codex-lb's upstream refresh route. Missing quota data is shown as unknown, not as 0%.
 
 Requests time out after 15 seconds. The widget reports authorization errors (401/403), other HTTP failures, invalid response formats, timeouts and general network failures separately. Browser fetch cannot reliably distinguish CORS failures from other connection or TLS failures; check the selected server and its reverse proxy when a network error appears. If an update fails without a configuration change, any displayed data is labelled as the last received snapshot.
 
@@ -109,6 +109,7 @@ Requests time out after 15 seconds. The widget reports authorization errors (401
 - Open settings from the plugin card and from the widget's gear. Save a URL, reopen the page, and confirm that URL is restored and the saved key stays hidden.
 - Connect to an HTTPS server with correct CORS, including a path prefix if used. Change only the URL with the key field empty, then change only the key. Confirm the open widget updates without re-enabling the plugin.
 - Switch servers while the old request is delayed. Confirm old accounts disappear immediately and the delayed response cannot replace the new server's data.
+- Hide the widget by switching away from HOME, panning it off-screen, or minimizing CanvasTTY. Wait longer than a minute and confirm no new summary requests start. Show it again and confirm an immediate refresh and then one request per minute, including after repeated hide/show cycles. Change the URL or key while it is hidden and confirm it uses the saved configuration when shown.
 - Try a credentialed URL, remote HTTP, a query, a fragment and the full summary path. Confirm errors appear and the saved configuration does not change. On first setup, also try an empty key.
 - Check denied storage/secrets access, HTTP 401/403 and 500, invalid JSON or missing `accounts`, an unreachable server, a delayed response and a redirect. Confirm visible errors, no secret values in messages, and that a timed-out request can be refreshed again.
 

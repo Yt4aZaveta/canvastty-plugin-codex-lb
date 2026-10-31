@@ -9,6 +9,7 @@ let apiKey = null;
 let endpoint = null;
 let configurationVersion = 0;
 let activeRequest = null;
+let refreshTimer = null;
 
 host.onContext(({ appearance }) => {
   document.documentElement.dataset.palette = appearance.palette;
@@ -99,7 +100,7 @@ function render(data) {
 }
 
 async function refresh() {
-  if (!apiKey || !endpoint || activeRequest) return;
+  if (document.visibilityState === "hidden" || !apiKey || !endpoint || activeRequest) return;
   const request = { controller: new AbortController(), version: configurationVersion };
   activeRequest = request;
   refreshButton.disabled = true;
@@ -194,7 +195,17 @@ configureButton.addEventListener("click", async () => {
   }
 });
 refreshButton.addEventListener("click", () => { void refresh(); });
-setInterval(() => { void refresh(); }, 60_000);
+
+function updatePolling() {
+  clearInterval(refreshTimer);
+  refreshTimer = null;
+  if (document.visibilityState === "hidden") return;
+  void refresh();
+  refreshTimer = setInterval(() => { void refresh(); }, 60_000);
+}
+
+document.addEventListener("visibilitychange", updatePolling);
+updatePolling();
 
 host.onStorageChange((key, value) => {
   if (key === config.storageKey) void applyConfiguration(value);
